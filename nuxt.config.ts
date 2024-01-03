@@ -1,9 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  $env: {
-    AZURE_CLIENT_ID: process.env.AZURE_CLIENT_ID || '',
-    AZURE_TENANT_ID: process.env.AZURE_TENANT_ID || '',
-    REDIRECT_URI: process.env.REDIRECT_URI || '',
+  runtimeConfig: {
+    public: {
+      clientId: process.env.CLIENT_ID ?? '',
+      tenantId: process.env.TENANT_ID ?? '',
+      redirectUri: process.env.REDIRECT_URI ?? '',
+    }
   }
 })

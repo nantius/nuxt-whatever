@@ -1,32 +1,51 @@
 <script setup>
-import {ref, watch } from 'vue'
-import {useMsal} from '../composables/useMsal'
-
-const msal = useMsal()
+import { ref, onMounted } from 'vue'
+import { PublicClientApplication } from '@azure/msal-browser'
+const runtimeConfig = useRuntimeConfig()
+const msal = ref(null)
 const isMsalInitialized = ref(false)
 
-watch(msal, (newValue) => {
-    if(newValue) {
-        isMsalInitialized.value = true
-    }
+onMounted(async () => {
+    msal.value = new PublicClientApplication({
+    auth: {
+      clientId: runtimeConfig.public.clientId,
+      authority: `https://login.microsoftonline.com/${runtimeConfig.public.tenantId}`,
+      redirectUri: 'http://localhost:3001',
+    },
+    cache: {
+      cacheLocation: 'localStorage',
+      storeAuthStateInCookie: false,
+    },
 })
 
-async function signIn() {
- if (!isMsalInitialized.value) {
-        console.log('MSAL is not initialized yet.')
-        return
-  }
+  await msal.value.initialize()
+  isMsalInitialized.value = true
+})
 
-  const loginRequest = {
+
+async function signIn() {
+  if (!isMsalInitialized.value) {
+    return 
+
+  }
+    const loginRequest = {
     scopes: ['User.Read'],
+    prompt: 'consent',
   }
 
   try {
-    const response = await msal.value.loginPopup(loginRequest)
-    console.log(response)
+    const account = await msal.value.getActiveAccount()
+    console.log(account)
+    if (!account) {
+      const response = await msal.value.loginPopup(loginRequest)
+      console.log(response)
+    } else {
+      const response = await msal.value.acquireTokenSilent(loginRequest)
+      console.log(response)
+    }
   } catch (error) {
     console.error(error)
-  }
+  } 
 }
 </script>
 
@@ -35,6 +54,4 @@ async function signIn() {
     <div>
         <button @click="signIn">Sign in</button>
     </div>
-        
-  
 </template>
